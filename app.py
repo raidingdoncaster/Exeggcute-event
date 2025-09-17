@@ -38,7 +38,7 @@ def fetch_event_details(event_link: str):
     dt_start = start.astimezone(tz)
     dt_end = end.astimezone(tz)
 
-    # ✅ Club ID
+    # ✅ Club ID (if available)
     club_id = event.get("club_id")
 
     return title, description, location, dt_start, dt_end, club_id
@@ -69,14 +69,7 @@ def index():
             title, description, location, start_dt, end_dt, club_id = fetch_event_details(url)
             gcal_link = build_gcal_link(title, description or url, location, start_dt, end_dt)
 
-            # 🔑 If user ticked "See all club events", redirect to pinboard
-            if request.form.get("view_club"):
-                if club_id:
-                    return redirect(url_for("club_events", club_id=club_id))
-                else:
-                    return render_template("index.html", error="Could not find club ID for this event.")
-
-            # Otherwise show single event result
+            # Default: show single event result
             return render_template(
                 "result.html",
                 title=title,
@@ -118,6 +111,17 @@ def club_events(club_id):
 
     except Exception as exc:
         return f"Error fetching events: {exc}", 500
+
+
+# -----------------------------
+# Club Redirect (from homepage form)
+# -----------------------------
+@app.route("/club")
+def club_redirect():
+    club_id = request.args.get("id")
+    if not club_id:
+        return "No Club ID provided", 400
+    return redirect(url_for("club_events", club_id=club_id))
 
 
 if __name__ == "__main__":
