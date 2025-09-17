@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Campfire to Google Calendar</title>
+</head>
+<body>
+  <h1>Campfire to Google Calendar</h1>
+  <form method="post" action="/">
+    <label for="url">Campfire link:</label><br>
+    <input type="text" name="url" id="url" placeholder="https://cmpf.re/…" required>
+    <button type="submit">Convert</button>
+  </form>
+  {% if error %}
+    <p style="color:red">{{ error }}</p>
+  {% endif %}
+</body>
+</html>
