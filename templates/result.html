@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Event Conversion Result</title>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <p><strong>Start:</strong> {{ start }}</p>
+  <p><strong>End:</strong> {{ end }}</p>
+  {% if location %}
+  <p><strong>Location:</strong> {{ location }}</p>
+  {% endif %}
+  {% if description %}
+  <p><strong>Description:</strong> {{ description }}</p>
+  {% endif %}
+  <p><a href="{{ link }}" target="_blank">Add to Google Calendar</a></p>
+  <p><a href="/">Convert another</a></p>
+</body>
+</html>
