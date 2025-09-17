@@ -1,24 +1,29 @@
 from flask import Flask, render_template, request
 import requests
-from urllib.parse import urlparse
+import re
 
 app = Flask(__name__)
 
-def extract_event_id(url: str) -> str:
-    """
-    Extract the event ID from a Campfire or cmpf.re URL.
-    Works with shortlinks like https://cmpf.re/XXXXXX or
-    full Campfire links like https://campfire.nianticlabs.com/discover/meetup/<id>.
-    """
-    parsed = urlparse(url)
-    path = parsed.path.strip("/")
+API_BASE = "https://campfire-tools.topi.wtf/api/events"
 
-    # If the path looks like meetup/<uuid>
-    if "meetup" in path:
-        return path.split("/")[-1]
+def extract_event_id(url):
+    """
+    Resolve cmpf.re short links and extract the UUID event ID
+    from a Campfire URL.
+    """
+    try:
+        # Follow redirects if it's a cmpf.re short link
+        resp = requests.get(url, allow_redirects=True, timeout=10)
+        final_url = resp.url
+    except Exception as e:
+        raise ValueError(f"Failed to resolve link: {e}")
 
-    # Otherwise assume it's already the short ID (cmpf.re redirects)
-    return path
+    # Match UUID in the final Campfire URL
+    match = re.search(r"([0-9a-fA-F-]{36})", final_url)
+    if not match:
+        raise ValueError("Could not extract event ID from link")
+    
+    return match.group(1)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -26,39 +31,30 @@ def index():
     error = None
 
     if request.method == "POST":
-        url = request.form.get("url")
-        try:
-            event_id = extract_event_id(url)
-            api_url = f"https://campfire-tools.topi.wtf/api/events?events={event_id}"
-            resp = requests.get(api_url)
-            resp.raise_for_status()
-            events = resp.json()
+        link = request.form.get("link", "").strip()
+        if not link:
+            error = "Please provide a link."
+        else:
+            try:
+                # Get the UUID
+                event_id = extract_event_id(link)
 
-            if events:
-                event = events[0]
+                # Query the API
+                api_url = f"{API_BASE}?events={event_id}"
+                resp = requests.get(api_url, timeout=10)
+                resp.raise_for_status()
 
-                # Count RSVP’d attendees (Accepted or Checked-in)
-                going_count = sum(
-                    1 for m in event.get("members", [])
-                    if m.get("rsvp_status") in ["ACCEPTED", "CHECKED_IN"]
-                )
+                data = resp.json()
+                if not data:
+                    error = "No event data found."
+                else:
+                    # Grab the first event object
+                    event_data = data[0]
 
-                # Prepare data for the template
-                event_data = {
-                    "title": event.get("name"),
-                    "time": event.get("time"),
-                    "url": event.get("url"),
-                    "live_event": event.get("campfire_live_event_name", "N/A"),
-                    "going": going_count,
-                    "location": event.get("location", "Unknown location"),
-                }
-            else:
-                error = "No event data found."
-
-        except Exception as e:
-            error = f"Couldn't process link: {str(e)}"
+            except Exception as e:
+                error = f"Couldn't process link: {e}"
 
     return render_template("index.html", event=event_data, error=error)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
