@@ -10,11 +10,12 @@ def fetch_event_details(cmpf_url: str):
     # 1. Follow redirect to get the long URL
     resp = requests.get(cmpf_url, allow_redirects=True, timeout=10)
     resp.raise_for_status()
-    final_url = resp.url  # e.g. https://niantic-social.nianticlabs.com/public/meetup/<UUID>
+    final_url = resp.url
+    print("DEBUG final_url:", final_url)  # 👈 This will show up in Render logs
 
-    # 2. Extract UUID
+    # 2. Extract UUID if possible
     if "/meetup/" not in final_url:
-        raise ValueError("Not a valid Campfire meetup link")
+        raise ValueError(f"Unexpected redirect: {final_url}")
     uuid = final_url.split("/meetup/")[-1]
 
     # 3. Hit Niantic’s API (public JSON)
@@ -58,7 +59,7 @@ def index():
             return render_template("index.html", error="Please provide a Campfire link.")
         try:
             title, description, location, start_dt, end_dt = fetch_event_details(url)
-            gcal_link = build_gcal_link(title, description, location, start_dt, end_dt)
+            gcal_link = build_gcal_link(title, description or url, location, start_dt, end_dt)
             return render_template(
                 "result.html",
                 title=title,
