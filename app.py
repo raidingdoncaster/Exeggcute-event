@@ -1,60 +1,59 @@
-from flask import Flask, render_template, request
+from flask import Flask, request, render_template, redirect, url_for
 import requests
-import re
+from datetime import datetime, timedelta
+import pytz
 
 app = Flask(__name__)
 
-API_BASE = "https://campfire-tools.topi.wtf/api/events"
-
-def extract_event_id(url):
-    """
-    Resolve cmpf.re short links and extract the UUID event ID
-    from a Campfire URL.
-    """
-    try:
-        # Follow redirects if it's a cmpf.re short link
-        resp = requests.get(url, allow_redirects=True, timeout=10)
-        final_url = resp.url
-    except Exception as e:
-        raise ValueError(f"Failed to resolve link: {e}")
-
-    # Match UUID in the final Campfire URL
-    match = re.search(r"([0-9a-fA-F-]{36})", final_url)
-    if not match:
-        raise ValueError("Could not extract event ID from link")
-    
-    return match.group(1)
-
 @app.route("/", methods=["GET", "POST"])
 def index():
-    event_data = None
-    error = None
-
     if request.method == "POST":
-        link = request.form.get("link", "").strip()
-        if not link:
-            error = "Please provide a link."
-        else:
-            try:
-                # Get the UUID
-                event_id = extract_event_id(link)
+        club_id = request.form.get("club_id", "").strip()
+        if not club_id:
+            return render_template("index.html", error="Please provide a Club ID.")
+        return redirect(url_for("club_events", club_id=club_id))
+    return render_template("index.html")
 
-                # Query the API
-                api_url = f"{API_BASE}?events={event_id}"
-                resp = requests.get(api_url, timeout=10)
-                resp.raise_for_status()
 
-                data = resp.json()
-                if not data:
-                    error = "No event data found."
-                else:
-                    # Grab the first event object
-                    event_data = data[0]
+@app.route("/club/<club_id>")
+def club_events(club_id):
+    try:
+        api_url = f"https://campfire-tools.topi.wtf/api/clubs/{club_id}/events"
+        resp = requests.get(api_url, timeout=10)
+        resp.raise_for_status()
+        events = resp.json()
 
-            except Exception as e:
-                error = f"Couldn't process link: {e}"
+        # Sort by time
+        events.sort(key=lambda e: e.get("time", ""))
 
-    return render_template("index.html", event=event_data, error=error)
+        # Format times + Google Calendar links
+        tz = pytz.timezone("Europe/London")
+        for e in events:
+            if e.get("time"):
+                start = datetime.fromisoformat(e["time"].replace("Z", "+00:00")).astimezone(tz)
+                end = start + timedelta(hours=1)
+
+                e["time_fmt"] = start.strftime("%a %d %b %Y, %H:%M")
+
+                # Google Calendar link
+                start_utc = start.astimezone(pytz.utc).strftime("%Y%m%dT%H%M%SZ")
+                end_utc = end.astimezone(pytz.utc).strftime("%Y%m%dT%H%M%SZ")
+                e["gcal_link"] = (
+                    "https://calendar.google.com/calendar/render?"
+                    f"action=TEMPLATE&text={e.get('campfire_live_event_name') or e.get('name')}"
+                    f"&details={e.get('name','')}"
+                    f"&location={e.get('url','')}"
+                    f"&dates={start_utc}/{end_utc}"
+                )
+            else:
+                e["time_fmt"] = "Unknown time"
+                e["gcal_link"] = None
+
+        return render_template("club_events.html", events=events, club_id=club_id)
+
+    except Exception as exc:
+        return f"Error fetching events: {exc}", 500
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
