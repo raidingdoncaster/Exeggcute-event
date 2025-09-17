@@ -8,25 +8,17 @@ app = Flask(__name__)
 
 def extract_event_id(url: str) -> str:
     """
-    Resolve cmpf.re shortlinks into full Campfire event IDs.
-    Always returns the proper UUID string for the API.
+    Extract the event identifier from a Campfire or cmpf.re link.
+    For cmpf.re, we just return the short token — the API import step will handle it.
     """
-    try:
-        # Pretend to be a browser to ensure cmpf.re expands
-        headers = {"User-Agent": "Mozilla/5.0"}
-        resp = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
-        final_url = resp.url
-    except Exception:
-        final_url = url  # fallback if redirect fails
-
-    parsed = urlparse(final_url)
+    parsed = urlparse(url)
     path = parsed.path.strip("/")
 
-    # Expect something like discover/meetup/<uuid>
+    # If it's a Campfire meetup link, extract the UUID
     if "meetup" in path:
         return path.split("/")[-1]
 
-    # Otherwise, just return the last part
+    # Otherwise return the token (cmpf.re shortlink, etc.)
     return path
 
 @app.route("/", methods=["GET", "POST"])
@@ -38,6 +30,14 @@ def index():
         url = request.form.get("url")
         try:
             event_id = extract_event_id(url)
+
+            # Step 1: Import the event into Topi's system
+            import_url = "https://campfire-tools.topi.wtf/api/events"
+            resp_import = requests.post(import_url, json=[event_id], timeout=10)
+            if resp_import.status_code not in (200, 204):
+                raise Exception(f"Import failed with status {resp_import.status_code}")
+
+            # Step 2: Fetch the event details
             api_url = f"https://campfire-tools.topi.wtf/api/events?events={event_id}"
             resp = requests.get(api_url, timeout=10)
             resp.raise_for_status()
