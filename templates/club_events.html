@@ -3,65 +3,21 @@
 <head>
   <title>Club Events</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      text-align: center;
-      padding: 30px;
+    body { font-family: Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 40px; }
+    h1 { margin-bottom: 20px; }
+    .event-card {
+      background: white; border-radius: 10px; padding: 20px;
+      margin: 15px auto; max-width: 500px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-align: left;
     }
-    h1 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      max-width: 500px;
-      margin: 20px auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      text-align: left;
-    }
-    .card img {
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 15px;
-    }
-    .card h2 {
-      margin: 0 0 10px;
-      font-size: 1.4em;
-      color: #222;
-    }
-    .card p {
-      margin: 6px 0;
-      font-size: 0.95em;
-      color: #444;
-    }
+    .event-card h2 { margin: 0 0 10px; font-size: 1.2em; }
+    .event-card p { margin: 6px 0; color: #555; }
     .btn {
-      display: inline-block;
-      margin-top: 10px;
-      margin-right: 6px;
-      padding: 8px 14px;
-      background: #4285f4;
-      color: white;
-      font-size: 14px;
-      font-weight: bold;
-      border-radius: 6px;
-      text-decoration: none;
+      display: inline-block; margin-top: 10px; margin-right: 8px;
+      padding: 8px 14px; background: #4285f4; color: white;
+      border-radius: 6px; text-decoration: none;
     }
-    .btn:hover {
-      background: #3367d6;
-    }
-    .back-link {
-      display: block;
-      margin-bottom: 25px;
-      font-size: 14px;
-      color: #666;
-      text-decoration: none;
-    }
-    .back-link:hover {
-      text-decoration: underline;
-    }
+    .btn:hover { background: #3367d6; }
+    .back-link { display: block; margin-bottom: 20px; text-decoration: none; color: #666; }
   </style>
 </head>
 <body>
@@ -69,37 +25,19 @@
   <h1>Club Events</h1>
 
   {% if events %}
-    {% for event in events %}
-      {% set title = event.campfire_live_event_name or event.name %}
-      {% set details = event.name %}
-      {% set location = event.url %}
-      {% set going = event.members | selectattr("rsvp_status","in",["ACCEPTED","CHECKED_IN"]) | list | length %}
-      {% if event.time %}
-        {# Start + End (assume 1 hour) #}
-        {% set start_iso = event.time %}
-        {% set start_fmt = event.time_fmt %}
-        {% set end_iso = event.time.replace('Z','') ~ '0100Z' %}
-        {% set gcal_link = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" ~ title|urlencode ~ "&details=" ~ details|urlencode ~ "&location=" ~ location|urlencode ~ "&dates=" ~ start_iso|replace('Z','000Z') ~ "/" ~ end_iso %}
-      {% endif %}
-
-      <div class="card">
-        {% if event.image %}
-          <img src="{{ event.image }}" alt="Event photo">
+    {% for e in events %}
+      <div class="event-card">
+        <h2>{{ e.campfire_live_event_name or e.name }}</h2>
+        <p>📅 {{ e.time_fmt }}</p>
+        {% if e.location %}<p>📍 {{ e.location }}</p>{% endif %}
+        {% if e.gcal_link %}
+          <a href="{{ e.gcal_link }}" target="_blank" class="btn">➕ Add to Google Calendar</a>
         {% endif %}
-        <h2>{{ title }}</h2>
-        <p><strong>📅 Time:</strong> {{ start_fmt }}</p>
-        <p><strong>📍 Location:</strong> {{ event.location or "Unknown location" }}</p>
-        <p><strong>🎫 Live Event:</strong> {{ event.campfire_live_event_name or "N/A" }}</p>
-        <p><strong>🙋 Going:</strong> {{ going }}</p>
-        <p>{{ details }}</p>
-        <a class="btn" href="{{ event.url }}" target="_blank">🔗 View on Campfire</a>
-        {% if event.time %}
-          <a class="btn" href="{{ gcal_link }}" target="_blank">➕ Add to Calendar</a>
-        {% endif %}
+        <a href="{{ e.url }}" target="_blank" class="btn">🔗 View on Campfire</a>
       </div>
     {% endfor %}
   {% else %}
     <p>No events found for this club.</p>
   {% endif %}
 </body>
-</html>
+</html
