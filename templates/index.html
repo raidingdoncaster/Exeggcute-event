@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Campfire Event to Calendar</title>
+  <title>Campfire Event Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -95,24 +95,32 @@
   </style>
 </head>
 <body>
-  <h1>Campfire Event → Calendar</h1>
+  <h1>Campfire Event Viewer</h1>
 
+  <!-- Input form -->
   <form method="POST">
-    <input type="text" name="url" placeholder="Paste Campfire link here" required>
+    <input type="text" id="link" name="link" placeholder="Paste Campfire link here" required>
     <button type="submit">Fetch Event</button>
   </form>
 
+  <!-- Error message -->
   {% if error %}
     <div class="error">{{ error }}</div>
   {% endif %}
 
+  <!-- Event card -->
   {% if event %}
     <div class="card">
-      <h2>{{ event.title }}</h2>
+      <h2>{{ event.campfire_live_event_name or event.name }}</h2>
       <p>📅 {{ event.time }}</p>
-      <p>📍 {{ event.location }}</p>
-      <p>🎫 Live Event: {{ event.live_event }}</p>
-      <p>🙋 Going: {{ event.going }}</p>
+      <p>📍 {{ event.location or "Unknown location" }}</p>
+      <p>🎫 Live Event: {{ event.campfire_live_event_name or "N/A" }}</p>
+
+      {% if event.members %}
+        {% set going = event.members | selectattr("rsvp_status", "in", ["ACCEPTED", "CHECKED_IN"]) | list | length %}
+        <p>🙋 Going: {{ going }}</p>
+      {% endif %}
+
       <a href="{{ event.url }}" target="_blank" class="btn">Join meetup</a>
     </div>
   {% endif %}
