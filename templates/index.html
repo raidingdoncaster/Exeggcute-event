@@ -1,92 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Campfire Event Tools</title>
+  <meta charset="UTF-8">
+  <title>Campfire Event to Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      text-align: center;
-      padding: 30px;
+      background: #f7f7f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+
     h1 {
-      color: #333;
+      text-align: center;
       margin-bottom: 20px;
+      color: #333;
     }
+
     form {
       margin-bottom: 30px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
+
     input[type="text"] {
-      width: 80%;
       padding: 10px;
       font-size: 16px;
+      width: 300px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 8px;
     }
+
     button {
-      padding: 10px 20px;
-      margin-top: 15px;
+      padding: 10px 16px;
       font-size: 16px;
-      background: #4285f4;
-      color: white;
+      background-color: #f06292;
+      color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
     }
+
     button:hover {
-      background: #3367d6;
+      background-color: #ec407a;
     }
-    .error {
-      color: red;
-      margin-top: 15px;
-    }
-    /* Event card */
+
     .card {
-      background: white;
+      background: #fff;
       border-radius: 12px;
       padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin: 10px auto;
       max-width: 500px;
-      margin: 20px auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      text-align: left;
-    }
-    .card img {
       width: 100%;
-      border-radius: 10px;
-      margin-bottom: 15px;
     }
+
     .card h2 {
-      margin: 0 0 10px;
-      font-size: 1.4em;
+      margin-top: 0;
+      font-size: 20px;
       color: #222;
     }
+
     .card p {
-      margin: 6px 0;
-      font-size: 0.95em;
+      margin: 8px 0;
+      font-size: 15px;
       color: #444;
     }
+
     .btn {
       display: inline-block;
-      margin-top: 15px;
-      padding: 10px 15px;
       background: #f06292;
       color: white;
-      font-size: 14px;
-      font-weight: bold;
+      padding: 10px 15px;
       border-radius: 6px;
       text-decoration: none;
+      font-weight: bold;
+      margin-top: 12px;
     }
+
     .btn:hover {
-      background: #e0487d;
+      background: #ec407a;
+    }
+
+    .error {
+      color: red;
+      margin: 20px 0;
     }
   </style>
 </head>
 <body>
-  <h1>Campfire Event Tools</h1>
+  <h1>Campfire Event → Calendar</h1>
 
   <form method="POST">
-    <input type="text" name="url" placeholder="Paste Campfire event link (e.g. https://cmpf.re/xxxxxx)" />
-    <br>
+    <input type="text" name="url" placeholder="Paste Campfire link here" required>
     <button type="submit">Fetch Event</button>
   </form>
 
@@ -96,16 +108,12 @@
 
   {% if event %}
     <div class="card">
-      {% if event.photo %}
-        <img src="{{ event.photo }}" alt="Event photo">
-      {% endif %}
       <h2>{{ event.title }}</h2>
-      <p><strong>📅 Time:</strong> {{ event.time_fmt }}</p>
-      <p><strong>📍 Location:</strong> {{ event.location }}</p>
-      <p><strong>🎫 Live Event:</strong> {{ event.live_event }}</p>
-      <p><strong>🙋 Going:</strong> {{ event.going }}</p>
-      <p>{{ event.description }}</p>
-      <a class="btn" href="{{ event.url }}" target="_blank">🔗 View on Campfire</a>
+      <p>📅 {{ event.time }}</p>
+      <p>📍 {{ event.location }}</p>
+      <p>🎫 Live Event: {{ event.live_event }}</p>
+      <p>🙋 Going: {{ event.going }}</p>
+      <a href="{{ event.url }}" target="_blank" class="btn">Join meetup</a>
     </div>
   {% endif %}
 </body>
