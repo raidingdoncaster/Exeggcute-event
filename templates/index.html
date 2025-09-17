@@ -9,11 +9,11 @@
       text-align: center;
       padding: 40px;
     }
-    h1 {
-      color: #333;
-    }
+    h1 { color: #333; }
+    h2 { margin-top: 40px; color: #444; }
     form {
       margin-top: 20px;
+      margin-bottom: 30px;
     }
     input[type="text"] {
       width: 80%;
@@ -32,34 +32,41 @@
       border-radius: 6px;
       cursor: pointer;
     }
-    button:hover {
-      background: #3367d6;
-    }
+    button:hover { background: #3367d6; }
     label {
       display: block;
       margin-top: 15px;
       font-size: 14px;
       color: #444;
     }
-    .error {
-      color: red;
-      margin-top: 15px;
+    .error { color: red; margin-top: 15px; }
+    .note {
+      font-size: 13px;
+      color: #555;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
   <h1>Campfire Event Tools</h1>
-  <p>Paste a Campfire event link below:</p>
 
+  <!-- Option 1: Single Event -->
+  <h2>1. Convert a single Campfire event</h2>
+  <p>Paste a <strong>Campfire event link</strong> (e.g. https://cmpf.re/xxxxxx)</p>
   <form method="POST">
     <input type="text" name="url" placeholder="https://cmpf.re/xxxxxx" />
     <br>
-    <label>
-      <input type="checkbox" name="view_club" value="1" />
-      Show all events from this club instead
-    </label>
+    <button type="submit">Convert to Google Calendar</button>
+  </form>
+
+  <!-- Option 2: Club Events -->
+  <h2>2. View all events for a Club</h2>
+  <p>Paste your <strong>Club ID</strong> (find it via <a href="https://campfire-tools.topi.wtf/export" target="_blank">Campfire Tools Export</a>).</p>
+  <form action="/club" method="GET">
+    <input type="text" name="id" placeholder="Club ID (e.g. b632fc8e-0b41-49de-ade2-21b0cd81db69)" />
     <br>
-    <button type="submit">Go</button>
+    <button type="submit">Show Club Events</button>
+    <p class="note">Tip: Use the Export tool once to discover your Club ID, then reuse it here anytime.</p>
   </form>
 
   {% if error %}
