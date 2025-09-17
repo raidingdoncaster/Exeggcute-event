@@ -12,8 +12,9 @@ def extract_event_id(url: str) -> str:
     Always returns the proper UUID string for the API.
     """
     try:
-        # Use GET (not HEAD) to follow cmpf.re redirects properly
-        resp = requests.get(url, allow_redirects=True, timeout=10)
+        # Pretend to be a browser to ensure cmpf.re expands
+        headers = {"User-Agent": "Mozilla/5.0"}
+        resp = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
         final_url = resp.url
     except Exception:
         final_url = url  # fallback if redirect fails
