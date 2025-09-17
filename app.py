@@ -12,11 +12,11 @@ def extract_event_id(url: str) -> str:
     Always returns the proper UUID string for the API.
     """
     try:
-        # Follow redirects if it's a shortlink
-        resp = requests.head(url, allow_redirects=True, timeout=10)
+        # Use GET (not HEAD) to follow cmpf.re redirects properly
+        resp = requests.get(url, allow_redirects=True, timeout=10)
         final_url = resp.url
     except Exception:
-        final_url = url  # fallback
+        final_url = url  # fallback if redirect fails
 
     parsed = urlparse(final_url)
     path = parsed.path.strip("/")
