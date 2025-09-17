@@ -1,128 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Campfire Event Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campfire Club Events</title>
   <style>
-    body {
-      background: #f7f7f7;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    form {
-      margin-bottom: 30px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    input[type="text"] {
-      padding: 10px;
-      font-size: 16px;
-      width: 300px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    button {
-      padding: 10px 16px;
-      font-size: 16px;
-      background-color: #f06292;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #ec407a;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin: 10px auto;
-      max-width: 500px;
-      width: 100%;
-    }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 20px;
-      color: #222;
-    }
-
-    .card p {
-      margin: 8px 0;
-      font-size: 15px;
-      color: #444;
-    }
-
-    .btn {
-      display: inline-block;
-      background: #f06292;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      margin-top: 12px;
-    }
-
-    .btn:hover {
-      background: #ec407a;
-    }
-
-    .error {
-      color: red;
-      margin: 20px 0;
-    }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 40px; }
+    input[type="text"] { width: 300px; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; margin-left: 10px; font-size: 16px; background: #4285f4; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #3367d6; }
+    .error { color: red; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Campfire Event Viewer</h1>
-
-  <!-- Input form -->
+  <h1>Campfire Club Events</h1>
   <form method="POST">
-    <input type="text" id="link" name="link" placeholder="Paste Campfire link here" required>
-    <button type="submit">Fetch Event</button>
+    <input type="text" name="club_id" placeholder="Enter Club ID" required>
+    <button type="submit">View Events</button>
   </form>
-
-  <!-- Error message -->
-  {% if error %}
-    <div class="error">{{ error }}</div>
-  {% endif %}
-
-  <!-- Event card -->
-  {% if event %}
-    <div class="card">
-      <h2>{{ event.campfire_live_event_name or event.name }}</h2>
-      <p>📅 {{ event.time }}</p>
-      <p>📍 {{ event.location or "Unknown location" }}</p>
-      <p>🎫 Live Event: {{ event.campfire_live_event_name or "N/A" }}</p>
-
-      {% if event.members %}
-        {% set going = event.members | selectattr("rsvp_status", "in", ["ACCEPTED", "CHECKED_IN"]) | list | length %}
-        <p>🙋 Going: {{ going }}</p>
-      {% endif %}
-
-      <a href="{{ event.url }}" target="_blank" class="btn">Join meetup</a>
-    </div>
-  {% endif %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
 </body>
 </html>
