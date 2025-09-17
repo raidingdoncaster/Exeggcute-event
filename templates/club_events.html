@@ -35,6 +35,7 @@
     .btn {
       display: inline-block;
       margin-top: 10px;
+      margin-right: 6px;
       padding: 8px 14px;
       background: #4285f4;
       color: white;
@@ -65,14 +66,13 @@
   {% if events %}
     {% for event in events %}
       {% set title = event.campfire_live_event_name or event.name %}
-      {% set start = event.time %}
-      {% if start %}
-        {% set start_dt = start.replace('Z', '000Z') %} {# pad seconds for safety #}
-      {% endif %}
       {% set details = event.name %}
       {% set location = event.url %}
       {% if event.time %}
-        {% set gcal_link = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" ~ title|urlencode ~ "&details=" ~ details|urlencode ~ "&location=" ~ location|urlencode ~ "&dates=" ~ event.time.replace('Z','000Z') ~ "/" ~ event.time.replace('Z','100Z') %}
+        {# Start + End (assume 1 hour) #}
+        {% set start_iso = event.time %}
+        {% set end_iso = event.time.replace('Z','') ~ '0100Z' %}
+        {% set gcal_link = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" ~ title|urlencode ~ "&details=" ~ details|urlencode ~ "&location=" ~ location|urlencode ~ "&dates=" ~ start_iso|replace('Z','000Z') ~ "/" ~ end_iso %}
       {% endif %}
 
       <div class="event-card">
