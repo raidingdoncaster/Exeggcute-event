@@ -1,20 +1,72 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>Event Conversion Result</title>
+  <title>{{ title }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding: 40px;
+    }
+    .event-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin: auto;
+      max-width: 500px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.6em;
+      color: #333;
+    }
+    p {
+      font-size: 1em;
+      color: #555;
+      margin: 6px 0;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #4285f4;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #3367d6;
+    }
+    .back-link {
+      display: block;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>{{ title }}</h1>
-  <p><strong>Start:</strong> {{ start }}</p>
-  <p><strong>End:</strong> {{ end }}</p>
-  {% if location %}
-  <p><strong>Location:</strong> {{ location }}</p>
-  {% endif %}
-  {% if description %}
-  <p><strong>Description:</strong> {{ description }}</p>
-  {% endif %}
-  <p><a href="{{ link }}" target="_blank">Add to Google Calendar</a></p>
-  <p><a href="/">Convert another</a></p>
+  <div class="event-card">
+    <h1>{{ title }}</h1>
+    <p><strong>Start:</strong> {{ start }}</p>
+    <p><strong>End:</strong> {{ end }}</p>
+    {% if location %}
+      <p><strong>Location:</strong> {{ location }}</p>
+    {% endif %}
+    {% if description %}
+      <p><strong>Details:</strong> {{ description }}</p>
+    {% endif %}
+    <a class="btn" href="{{ link }}" target="_blank">➕ Add to Google Calendar</a>
+    <a class="back-link" href="/">⬅ Back to homepage</a>
+  </div>
 </body>
 </html>
