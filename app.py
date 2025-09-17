@@ -20,10 +20,12 @@ def fetch_event_details(event_link: str):
 
     event = data[0]
 
+    # Title/description
     title = event.get("campfire_live_event_name") or event.get("name", "Campfire Event")
     description = event.get("name", "")
     location = event.get("url", "")
 
+    # Time
     start_str = event.get("time")
     if not start_str:
         raise ValueError("No time data in API response")
@@ -31,11 +33,15 @@ def fetch_event_details(event_link: str):
     start = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
     end = start + timedelta(hours=1)
 
+    # Timezone conversion
     tz = pytz.timezone("Europe/London")
     dt_start = start.astimezone(tz)
     dt_end = end.astimezone(tz)
 
-    return title, description, location, dt_start, dt_end, event
+    # ✅ Club ID
+    club_id = event.get("club_id")
+
+    return title, description, location, dt_start, dt_end, club_id
 
 
 def build_gcal_link(title, description, location, dt_start, dt_end):
@@ -60,12 +66,11 @@ def index():
         if not url:
             return render_template("index.html", error="Please provide a Campfire link.")
         try:
-            title, description, location, start_dt, end_dt, event = fetch_event_details(url)
+            title, description, location, start_dt, end_dt, club_id = fetch_event_details(url)
             gcal_link = build_gcal_link(title, description or url, location, start_dt, end_dt)
 
             # 🔑 If user ticked "See all club events", redirect to pinboard
             if request.form.get("view_club"):
-                club_id = event.get("club_id")
                 if club_id:
                     return redirect(url_for("club_events", club_id=club_id))
                 else:
@@ -97,8 +102,10 @@ def club_events(club_id):
         resp.raise_for_status()
         events = resp.json()
 
+        # Sort by time
         events.sort(key=lambda e: e.get("time", ""))
 
+        # Format times nicely
         tz = pytz.timezone("Europe/London")
         for e in events:
             if e.get("time"):
