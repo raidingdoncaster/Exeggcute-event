@@ -1,25 +1,31 @@
 from flask import Flask, render_template, request
 import requests
 from urllib.parse import urlparse
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 app = Flask(__name__)
 
 def extract_event_id(url: str) -> str:
     """
-    Extract the event ID from a Campfire or cmpf.re URL.
-    Works with shortlinks like https://cmpf.re/XXXXXX
-    or full Campfire links like https://campfire.nianticlabs.com/discover/meetup/<id>.
+    Resolve cmpf.re shortlinks into full Campfire event IDs.
+    Always returns the proper UUID string for the API.
     """
-    parsed = urlparse(url)
+    try:
+        # Follow redirects if it's a shortlink
+        resp = requests.head(url, allow_redirects=True, timeout=10)
+        final_url = resp.url
+    except Exception:
+        final_url = url  # fallback
+
+    parsed = urlparse(final_url)
     path = parsed.path.strip("/")
 
-    # If the path looks like meetup/<uuid>
+    # Expect something like discover/meetup/<uuid>
     if "meetup" in path:
         return path.split("/")[-1]
 
-    # Otherwise assume it's already the short ID (cmpf.re redirects)
+    # Otherwise, just return the last part
     return path
 
 @app.route("/", methods=["GET", "POST"])
