@@ -7,30 +7,35 @@
       font-family: Arial, sans-serif;
       background: #f9f9f9;
       text-align: center;
-      padding: 40px;
+      padding: 30px;
     }
     h1 {
       color: #333;
       margin-bottom: 20px;
     }
-    .event-card {
+    .card {
       background: white;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 20px;
-      margin: 15px auto;
       max-width: 500px;
+      margin: 20px auto;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       text-align: left;
     }
-    .event-card h2 {
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .card h2 {
       margin: 0 0 10px;
-      font-size: 1.3em;
+      font-size: 1.4em;
       color: #222;
     }
-    .event-card p {
-      font-size: 0.95em;
-      color: #555;
+    .card p {
       margin: 6px 0;
+      font-size: 0.95em;
+      color: #444;
     }
     .btn {
       display: inline-block;
@@ -40,9 +45,9 @@
       background: #4285f4;
       color: white;
       font-size: 14px;
+      font-weight: bold;
       border-radius: 6px;
       text-decoration: none;
-      transition: background 0.2s;
     }
     .btn:hover {
       background: #3367d6;
@@ -68,20 +73,28 @@
       {% set title = event.campfire_live_event_name or event.name %}
       {% set details = event.name %}
       {% set location = event.url %}
+      {% set going = event.members | selectattr("rsvp_status","in",["ACCEPTED","CHECKED_IN"]) | list | length %}
       {% if event.time %}
         {# Start + End (assume 1 hour) #}
         {% set start_iso = event.time %}
+        {% set start_fmt = event.time_fmt %}
         {% set end_iso = event.time.replace('Z','') ~ '0100Z' %}
         {% set gcal_link = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" ~ title|urlencode ~ "&details=" ~ details|urlencode ~ "&location=" ~ location|urlencode ~ "&dates=" ~ start_iso|replace('Z','000Z') ~ "/" ~ end_iso %}
       {% endif %}
 
-      <div class="event-card">
+      <div class="card">
+        {% if event.image %}
+          <img src="{{ event.image }}" alt="Event photo">
+        {% endif %}
         <h2>{{ title }}</h2>
-        <p><strong>Time:</strong> {{ event.time_fmt }}</p>
-        <p><strong>ID:</strong> {{ event.id }}</p>
-        <a class="btn" href="{{ event.url }}" target="_blank">View on Campfire</a>
+        <p><strong>📅 Time:</strong> {{ start_fmt }}</p>
+        <p><strong>📍 Location:</strong> {{ event.location or "Unknown location" }}</p>
+        <p><strong>🎫 Live Event:</strong> {{ event.campfire_live_event_name or "N/A" }}</p>
+        <p><strong>🙋 Going:</strong> {{ going }}</p>
+        <p>{{ details }}</p>
+        <a class="btn" href="{{ event.url }}" target="_blank">🔗 View on Campfire</a>
         {% if event.time %}
-          <a class="btn" href="{{ gcal_link }}" target="_blank">➕ Add to Google Calendar</a>
+          <a class="btn" href="{{ gcal_link }}" target="_blank">➕ Add to Calendar</a>
         {% endif %}
       </div>
     {% endfor %}
