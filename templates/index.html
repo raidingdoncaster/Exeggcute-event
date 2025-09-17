@@ -1,74 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Campfire Events</title>
+  <title>Campfire Club Events</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 20px; }
-    .event-card { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .event-header { display: flex; align-items: center; }
-    .event-header img { border-radius: 50%; width: 40px; height: 40px; margin-right: 10px; }
-    .meetup-pic { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
-    .btn { display: inline-block; margin-top: 10px; padding: 10px 15px; background: #4285F4; color: white; text-decoration: none; border-radius: 4px; }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 40px; }
+    input[type="text"] { width: 300px; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; margin-left: 10px; font-size: 16px; background: #4285f4; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #3367d6; }
+    .error { color: red; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Campfire Events</h1>
-  <div id="events"></div>
-
-  <script>
-    async function loadEvents() {
-      const groupId = "YOUR_GROUP_ID"; // replace with dynamic input
-      const response = await fetch(`https://campfire-tools.topi.wtf/api/events?group=${groupId}`);
-      let events = await response.json();
-
-      // Sort newest to oldest
-      events.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-
-      const container = document.getElementById("events");
-
-      events.forEach(event => {
-        const card = document.createElement("div");
-        card.className = "event-card";
-
-        // Host info
-        const hostSection = `
-          <div class="event-header">
-            <img src="${event.creator_picture}" alt="Host picture">
-            <strong>${event.creator_name}</strong>
-          </div>
-        `;
-
-        // Meetup picture
-        const meetupPic = event.meetup_picture 
-          ? `<img src="${event.meetup_picture}" class="meetup-pic" alt="Meetup picture">`
-          : "";
-
-        // Google Calendar link
-        const title = encodeURIComponent(event.title);
-        const start = new Date(event.start_time).toISOString().replace(/-|:|\.\d+/g, "");
-        const end = new Date(event.end_time).toISOString().replace(/-|:|\.\d+/g, "");
-        const description = encodeURIComponent(
-          `Hosted by: ${event.creator_name}\nCampfire Live Event: ${event.live_event_name || "N/A"}`
-        );
-        const location = encodeURIComponent(event.location || "");
-        const calendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${description}&location=${location}`;
-
-        card.innerHTML = `
-          <h2>${event.title}</h2>
-          ${hostSection}
-          ${meetupPic}
-          <p><strong>When:</strong> ${new Date(event.start_time).toLocaleString()}</p>
-          <p><strong>Where:</strong> ${event.location || "TBA"}</p>
-          <p><strong>Live Event:</strong> ${event.live_event_name || "—"}</p>
-          <a href="${calendarLink}" target="_blank" class="btn">Add to Google Calendar</a>
-        `;
-
-        container.appendChild(card);
-      });
-    }
-
-    loadEvents();
-  </script>
+  <h1>Campfire Club Events</h1>
+  <form method="POST">
+    <input type="text" name="club_id" placeholder="Enter Club ID" required>
+    <button type="submit">View Events</button>
+  </form>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
 </body>
 </html>
