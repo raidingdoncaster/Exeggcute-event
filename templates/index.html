@@ -1,18 +1,69 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>Campfire to Google Calendar</title>
+  <title>Campfire Event Tools</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #333;
+    }
+    form {
+      margin-top: 20px;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 15px;
+      font-size: 16px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3367d6;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #444;
+    }
+    .error {
+      color: red;
+      margin-top: 15px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Campfire to Google Calendar</h1>
-  <form method="post" action="/">
-    <label for="url">Campfire link:</label><br>
-    <input type="text" name="url" id="url" placeholder="https://cmpf.re/…" required>
-    <button type="submit">Convert</button>
+  <h1>Campfire Event Tools</h1>
+  <p>Paste a Campfire event link below:</p>
+
+  <form method="POST">
+    <input type="text" name="url" placeholder="https://cmpf.re/xxxxxx" />
+    <br>
+    <label>
+      <input type="checkbox" name="view_club" value="1" />
+      Show all events from this club instead
+    </label>
+    <br>
+    <button type="submit">Go</button>
   </form>
+
   {% if error %}
-    <p style="color:red">{{ error }}</p>
+    <div class="error">{{ error }}</div>
   {% endif %}
 </body>
 </html>
