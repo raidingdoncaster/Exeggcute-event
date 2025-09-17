@@ -1,40 +1,47 @@
 from flask import Flask, request, render_template
 import urllib.parse
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 app = Flask(__name__)
 
-def fetch_event_details(cmpf_url: str):
-    # 1. Follow redirect to get the long URL
-    resp = requests.get(cmpf_url, allow_redirects=True, timeout=10)
+def fetch_event_details(event_link: str):
+    """
+    Uses the campfire-tools.topi.wtf API to fetch event details.
+    Works with cmpf.re short links, UUIDs, or full Campfire URLs.
+    """
+    api_url = "https://campfire-tools.topi.wtf/api/events"
+    resp = requests.get(api_url, params={"events": event_link}, timeout=10)
     resp.raise_for_status()
-    final_url = resp.url
-    print("DEBUG final_url:", final_url)  # 👈 This will show up in Render logs
+    data = resp.json()
 
-    # 2. Extract UUID if possible
-    if "/meetup/" not in final_url:
-        raise ValueError(f"Unexpected redirect: {final_url}")
-    uuid = final_url.split("/meetup/")[-1]
+    if not data:
+        raise ValueError("No event data returned from API")
 
-    # 3. Hit Niantic’s API (public JSON)
-    api_url = f"https://niantic-social.nianticlabs.com/api/meetup/{uuid}"
-    api_resp = requests.get(api_url, timeout=10)
-    api_resp.raise_for_status()
-    data = api_resp.json()
+    event = data[0]
 
-    # 4. Extract fields
-    title = data.get("title", "Campfire Event")
-    description = data.get("description", "")
-    location = data.get("location", {}).get("name", "")
-    start_str = data.get("startTime")  # ISO8601 e.g. "2025-09-17T09:00:00Z"
-    end_str = data.get("endTime")
+    # Title/description
+    title = event.get("campfire_live_event_name") or event.get("name", "Campfire Event")
+    description = event.get("name", "")
 
-    # Parse times into datetime
+    # Location (API doesn’t always give full address, fallback to event URL)
+    location = event.get("url", "")
+
+    # Time (API gives ISO8601 start time, but no explicit end time)
+    start_str = event.get("time")
+    if not start_str:
+        raise ValueError("No time data in API response")
+
+    start = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+
+    # Assume events last 1 hour if no explicit end time
+    end = start + timedelta(hours=1)
+
+    # Convert to Europe/London timezone
     tz = pytz.timezone("Europe/London")
-    dt_start = datetime.fromisoformat(start_str.replace("Z", "+00:00")).astimezone(tz)
-    dt_end = datetime.fromisoformat(end_str.replace("Z", "+00:00")).astimezone(tz)
+    dt_start = start.astimezone(tz)
+    dt_end = end.astimezone(tz)
 
     return title, description, location, dt_start, dt_end
 
@@ -42,6 +49,7 @@ def build_gcal_link(title, description, location, dt_start, dt_end):
     def format_dt(dt: datetime) -> str:
         utc = dt.astimezone(pytz.utc)
         return utc.strftime("%Y%m%dT%H%M%SZ")
+
     params = {
         "action": "TEMPLATE",
         "text": title,
@@ -63,8 +71,8 @@ def index():
             return render_template(
                 "result.html",
                 title=title,
-                start=start_dt,
-                end=end_dt,
+                start=start_dt.strftime("%a %d %b %Y, %H:%M"),
+                end=end_dt.strftime("%a %d %b %Y, %H:%M"),
                 location=location,
                 description=description,
                 link=gcal_link,
