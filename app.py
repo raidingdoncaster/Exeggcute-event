@@ -1,55 +1,41 @@
 from flask import Flask, request, render_template
 import urllib.parse
-import re
-from datetime import datetime
 import requests
-from bs4 import BeautifulSoup
+from datetime import datetime
 import pytz
 
 app = Flask(__name__)
 
-def extract_event_details(page_html: str):
-    soup = BeautifulSoup(page_html, "html.parser")
+def fetch_event_details(cmpf_url: str):
+    # 1. Follow redirect to get the long URL
+    resp = requests.get(cmpf_url, allow_redirects=True, timeout=10)
+    resp.raise_for_status()
+    final_url = resp.url  # e.g. https://niantic-social.nianticlabs.com/public/meetup/<UUID>
 
-    # ---- Title ----
-    title_tag = soup.find("h2")
-    title = title_tag.get_text(strip=True) if title_tag else "Campfire Event"
+    # 2. Extract UUID
+    if "/meetup/" not in final_url:
+        raise ValueError("Not a valid Campfire meetup link")
+    uuid = final_url.split("/meetup/")[-1]
 
-    # ---- Description (optional) ----
-    description = ""
-    if title_tag:
-        desc_tag = title_tag.find_next("p")
-        if desc_tag:
-            description = desc_tag.get_text(strip=True)
+    # 3. Hit Niantic’s API (public JSON)
+    api_url = f"https://niantic-social.nianticlabs.com/api/meetup/{uuid}"
+    api_resp = requests.get(api_url, timeout=10)
+    api_resp.raise_for_status()
+    data = api_resp.json()
 
-    html = str(soup)
+    # 4. Extract fields
+    title = data.get("title", "Campfire Event")
+    description = data.get("description", "")
+    location = data.get("location", {}).get("name", "")
+    start_str = data.get("startTime")  # ISO8601 e.g. "2025-09-17T09:00:00Z"
+    end_str = data.get("endTime")
 
-    # ---- Extract time/date ----
-    # Looks like: Sep 17, 2025 10:00 AM – 11:00 AM
-    time_match = re.search(r"([A-Z][a-z]{2} \d{1,2}, \d{4} \d{1,2}:\d{2} [AP]M)\s*[–-]\s*(\d{1,2}:\d{2} [AP]M)", html)
-    if not time_match:
-        raise ValueError("Could not parse date/time from page")
-
-    start_str = time_match.group(1)       # "Sep 17, 2025 10:00 AM"
-    end_time_str = time_match.group(2)    # "11:00 AM"
-    date_str = " ".join(start_str.split()[0:3])  # "Sep 17, 2025"
-
-    dt_start = datetime.strptime(start_str, "%b %d, %Y %I:%M %p")
-    dt_end = datetime.strptime(f"{date_str} {end_time_str}", "%b %d, %Y %I:%M %p")
-
+    # Parse times into datetime
     tz = pytz.timezone("Europe/London")
-    dt_start = tz.localize(dt_start)
-    dt_end = tz.localize(dt_end)
+    dt_start = datetime.fromisoformat(start_str.replace("Z", "+00:00")).astimezone(tz)
+    dt_end = datetime.fromisoformat(end_str.replace("Z", "+00:00")).astimezone(tz)
 
-    # ---- Location ----
-    location = ""
-    for div in soup.find_all("div"):
-        text = div.get_text(" ", strip=True)
-        if "," in text and "United" in text:
-            location = text
-            break
-
-    return title, location, description, dt_start, dt_end
+    return title, description, location, dt_start, dt_end
 
 def build_gcal_link(title, description, location, dt_start, dt_end):
     def format_dt(dt: datetime) -> str:
@@ -71,10 +57,8 @@ def index():
         if not url:
             return render_template("index.html", error="Please provide a Campfire link.")
         try:
-            resp = requests.get(url, timeout=10)
-            resp.raise_for_status()
-            title, location, description, start_dt, end_dt = extract_event_details(resp.text)
-            gcal_link = build_gcal_link(title, description or url, location, start_dt, end_dt)
+            title, description, location, start_dt, end_dt = fetch_event_details(url)
+            gcal_link = build_gcal_link(title, description, location, start_dt, end_dt)
             return render_template(
                 "result.html",
                 title=title,
